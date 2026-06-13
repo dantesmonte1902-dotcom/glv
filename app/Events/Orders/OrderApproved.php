@@ -10,7 +10,5 @@ class OrderApproved
 {
     use Dispatchable, SerializesModels;
 
-    public function __construct(public Order $order)
-    {
-    }
+    public function __construct(public Order $order) {}
 }

@@ -17,8 +17,7 @@ class OrderController extends Controller
     public function __construct(
         private readonly OrderService $orderService,
         private readonly CourierAssignmentService $courierAssignmentService,
-    ) {
-    }
+    ) {}
 
     public function store(StoreOrderRequest $request): JsonResponse
     {
@@ -28,25 +27,31 @@ class OrderController extends Controller
         );
     }
 
-    public function show(Request $request, Order $order): OrderResource
+    public function show(Request $request, Order $order): JsonResponse
     {
         $this->authorize('view', $order);
 
-        return new OrderResource($this->orderService->showForUser($request->user(), $order));
+        return response()->json(
+            (new OrderResource($this->orderService->showForUser($request->user(), $order)))->resolve(),
+        );
     }
 
-    public function approve(Request $request, Order $order): OrderResource
+    public function approve(Request $request, Order $order): JsonResponse
     {
         $this->authorize('approve', $order);
 
-        return new OrderResource($this->orderService->approve($request->user(), $order));
+        return response()->json(
+            (new OrderResource($this->orderService->approve($request->user(), $order)))->resolve(),
+        );
     }
 
-    public function reject(OrderDecisionRequest $request, Order $order): OrderResource
+    public function reject(OrderDecisionRequest $request, Order $order): JsonResponse
     {
         $this->authorize('reject', $order);
 
-        return new OrderResource($this->orderService->reject($request->user(), $order, $request->validated('reason')));
+        return response()->json(
+            (new OrderResource($this->orderService->reject($request->user(), $order, $request->validated('reason'))))->resolve(),
+        );
     }
 
     public function assignCourier(Request $request, Order $order): JsonResponse
@@ -65,28 +70,34 @@ class OrderController extends Controller
         ]);
     }
 
-    public function acceptCourier(Request $request, Order $order): OrderResource
+    public function acceptCourier(Request $request, Order $order): JsonResponse
     {
         $this->authorize('acceptCourier', $order);
 
         $this->courierAssignmentService->acceptOrder($request->user(), $order);
 
-        return new OrderResource($this->orderService->showForUser($request->user(), $order->fresh()));
+        return response()->json(
+            (new OrderResource($this->orderService->showForUser($request->user(), $order->fresh())))->resolve(),
+        );
     }
 
-    public function rejectCourier(Request $request, Order $order): OrderResource
+    public function rejectCourier(Request $request, Order $order): JsonResponse
     {
         $this->authorize('rejectCourier', $order);
 
         $this->courierAssignmentService->rejectOrder($request->user(), $order);
 
-        return new OrderResource($this->orderService->showForUser($request->user(), $order->fresh()));
+        return response()->json(
+            (new OrderResource($this->orderService->showForUser($request->user(), $order->fresh())))->resolve(),
+        );
     }
 
-    public function deliver(Request $request, Order $order): OrderResource
+    public function deliver(Request $request, Order $order): JsonResponse
     {
         $this->authorize('deliver', $order);
 
-        return new OrderResource($this->orderService->deliver($request->user(), $order));
+        return response()->json(
+            (new OrderResource($this->orderService->deliver($request->user(), $order)))->resolve(),
+        );
     }
 }

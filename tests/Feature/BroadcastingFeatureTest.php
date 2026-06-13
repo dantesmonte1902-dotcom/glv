@@ -17,7 +17,7 @@ use App\Models\RestaurantBranch;
 use App\Models\User;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Broadcast;
+use Illuminate\Support\Facades\Gate;
 use Tests\TestCase;
 
 class BroadcastingFeatureTest extends TestCase
@@ -72,10 +72,8 @@ class BroadcastingFeatureTest extends TestCase
             'role' => UserRole::RESTAURANT,
         ]);
 
-        Broadcast::channel('orders.'.$order->id.'.tracking', fn () => true);
-
-        $this->assertTrue((bool) Broadcast::auth($this->channelRequest($owner, 'orders.'.$order->id.'.tracking'))->getData()->auth);
-        $this->assertFalse($this->channelAuthorizationSucceeded($foreignOwner, 'orders.'.$order->id.'.tracking'));
+        $this->assertTrue(Gate::forUser($owner)->allows('track', $order));
+        $this->assertFalse(Gate::forUser($foreignOwner)->allows('track', $order));
     }
 
     public function test_order_status_update_event_broadcasts_expected_payload(): void
@@ -164,27 +162,5 @@ class BroadcastingFeatureTest extends TestCase
         }
 
         return $order->fresh()->load('courierAssignment.courier');
-    }
-
-    private function channelRequest(User $user, string $channel)
-    {
-        return request()->duplicate([], [
-            'socket_id' => '1234.5678',
-            'channel_name' => $channel,
-        ], [], [], [], [
-            'REQUEST_METHOD' => 'POST',
-            'HTTP_ACCEPT' => 'application/json',
-        ])->setUserResolver(fn () => $user);
-    }
-
-    private function channelAuthorizationSucceeded(User $user, string $channel): bool
-    {
-        try {
-            Broadcast::auth($this->channelRequest($user, $channel));
-
-            return true;
-        } catch (\Symfony\Component\HttpKernel\Exception\HttpException) {
-            return false;
-        }
     }
 }

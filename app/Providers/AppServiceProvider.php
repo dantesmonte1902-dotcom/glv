@@ -12,8 +12,8 @@ use App\Policies\OrderPolicy;
 use App\Policies\RestaurantBranchPolicy;
 use App\Policies\RestaurantPolicy;
 use App\Policies\UserPolicy;
-use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {

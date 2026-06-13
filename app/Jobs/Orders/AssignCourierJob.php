@@ -14,8 +14,7 @@ class AssignCourierJob implements ShouldQueue
     public function __construct(
         private readonly int $orderId,
         private readonly ?int $excludedCourierId = null,
-    ) {
-    }
+    ) {}
 
     public function handle(CourierAssignmentService $assignmentService): void
     {

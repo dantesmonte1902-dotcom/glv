@@ -3,8 +3,8 @@
 use App\Enums\UserRole;
 use App\Models\Order;
 use App\Models\User;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Broadcast;
+use Illuminate\Support\Facades\Gate;
 
 Broadcast::channel('couriers.{courierId}', function (User $user, int $courierId): bool {
     return $user->is_active

@@ -7,13 +7,10 @@ use App\Http\Requests\Api\V1\Courier\UpdateCourierAvailabilityRequest;
 use App\Http\Requests\Api\V1\Courier\UpdateCourierLocationRequest;
 use App\Services\Courier\CourierAssignmentService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class CourierController extends Controller
 {
-    public function __construct(private readonly CourierAssignmentService $courierAssignmentService)
-    {
-    }
+    public function __construct(private readonly CourierAssignmentService $courierAssignmentService) {}
 
     public function updateLocation(UpdateCourierLocationRequest $request): JsonResponse
     {

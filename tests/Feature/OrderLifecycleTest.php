@@ -91,6 +91,7 @@ class OrderLifecycleTest extends TestCase
 
         $approveResponse
             ->assertOk()
-            ->assertJsonPath('status', 'searching_courier');
+            ->assertJsonPath('status', 'courier_assigned')
+            ->assertJsonPath('courier_assignment.status', 'offered');
     }
 }

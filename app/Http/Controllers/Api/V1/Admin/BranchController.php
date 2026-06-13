@@ -7,18 +7,19 @@ use App\Http\Requests\Api\V1\Admin\StoreBranchRequest;
 use App\Http\Resources\RestaurantBranchResource;
 use App\Models\Restaurant;
 use App\Models\RestaurantBranch;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class BranchController extends Controller
 {
-    public function index(Restaurant $restaurant): AnonymousResourceCollection
+    public function index(Request $request, Restaurant $restaurant): AnonymousResourceCollection
     {
         $this->authorize('viewAny', [RestaurantBranch::class, $restaurant]);
 
         $query = $restaurant->branches()->with('city');
 
-        if (($this->authorizeResourceUser()?->role->value ?? $this->authorizeResourceUser()?->role) === 'restaurant') {
-            $query->where('city_id', $this->authorizeResourceUser()->city_id);
+        if (($request->user()->role->value ?? $request->user()->role) === 'restaurant') {
+            $query->where('city_id', $request->user()->city_id);
         }
 
         return RestaurantBranchResource::collection($query->paginate());
@@ -38,12 +39,5 @@ class BranchController extends Controller
         $branch->update($request->validated());
 
         return new RestaurantBranchResource($branch->refresh()->load('city', 'restaurant'));
-    }
-
-    private function authorizeResourceUser()
-    {
-        request()->user()?->loadMissing('restaurant');
-
-        return request()->user();
     }
 }

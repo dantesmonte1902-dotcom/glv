@@ -18,8 +18,7 @@ class CourierLocationUpdated implements ShouldBroadcastNow
         public User $courier,
         public CourierProfile $profile,
         public array $activeOrderIds,
-    ) {
-    }
+    ) {}
 
     public function broadcastOn(): array
     {
