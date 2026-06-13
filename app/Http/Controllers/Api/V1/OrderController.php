@@ -30,21 +30,29 @@ class OrderController extends Controller
 
     public function show(Request $request, Order $order): OrderResource
     {
+        $this->authorize('view', $order);
+
         return new OrderResource($this->orderService->showForUser($request->user(), $order));
     }
 
     public function approve(Request $request, Order $order): OrderResource
     {
+        $this->authorize('approve', $order);
+
         return new OrderResource($this->orderService->approve($request->user(), $order));
     }
 
     public function reject(OrderDecisionRequest $request, Order $order): OrderResource
     {
+        $this->authorize('reject', $order);
+
         return new OrderResource($this->orderService->reject($request->user(), $order, $request->validated('reason')));
     }
 
     public function assignCourier(Request $request, Order $order): JsonResponse
     {
+        $this->authorize('assignCourier', $order);
+
         $assignment = $this->orderService->dispatchAssignment($request->user(), $order);
 
         return response()->json([
@@ -59,6 +67,8 @@ class OrderController extends Controller
 
     public function acceptCourier(Request $request, Order $order): OrderResource
     {
+        $this->authorize('acceptCourier', $order);
+
         $this->courierAssignmentService->acceptOrder($request->user(), $order);
 
         return new OrderResource($this->orderService->showForUser($request->user(), $order->fresh()));
@@ -66,6 +76,8 @@ class OrderController extends Controller
 
     public function rejectCourier(Request $request, Order $order): OrderResource
     {
+        $this->authorize('rejectCourier', $order);
+
         $this->courierAssignmentService->rejectOrder($request->user(), $order);
 
         return new OrderResource($this->orderService->showForUser($request->user(), $order->fresh()));
@@ -73,6 +85,8 @@ class OrderController extends Controller
 
     public function deliver(Request $request, Order $order): OrderResource
     {
+        $this->authorize('deliver', $order);
+
         return new OrderResource($this->orderService->deliver($request->user(), $order));
     }
 }

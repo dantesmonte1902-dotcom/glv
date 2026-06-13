@@ -11,6 +11,8 @@ class CourierController extends Controller
 {
     public function updateActivation(UpdateCourierActivationRequest $request, User $courier): UserResource
     {
+        $this->authorize('updateActivation', $courier);
+
         $courier->update($request->validated());
 
         return new UserResource($courier->refresh()->loadMissing('city', 'courierProfile'));

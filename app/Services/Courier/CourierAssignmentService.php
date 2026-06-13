@@ -7,6 +7,7 @@ use App\Enums\OrderStatus;
 use App\Enums\UserRole;
 use App\Events\Courier\CourierAssigned;
 use App\Events\Courier\CourierLocationUpdated;
+use App\Events\Orders\OrderStatusUpdated;
 use App\Jobs\Orders\AssignCourierJob;
 use App\Models\CourierAssignment;
 use App\Models\CourierProfile;
@@ -98,6 +99,8 @@ class CourierAssignmentService
             'status' => OrderStatus::OUT_FOR_DELIVERY,
         ])->save();
 
+        OrderStatusUpdated::dispatch($order->fresh()->load('branch.restaurant', 'courierAssignment'));
+
         return $assignment->fresh('courier');
     }
 
@@ -114,6 +117,8 @@ class CourierAssignmentService
         $order->forceFill([
             'status' => OrderStatus::SEARCHING_COURIER,
         ])->save();
+
+        OrderStatusUpdated::dispatch($order->fresh()->load('branch.restaurant', 'courierAssignment'));
 
         AssignCourierJob::dispatch($order->id, $excludedCourierId);
 
@@ -170,7 +175,10 @@ class CourierAssignmentService
     {
         $assignment = $order->courierAssignment;
 
-        if (! $assignment || $assignment->courier_id !== $courier->id || ($assignment->status->value ?? $assignment->status) !== $expectedStatus->value) {
+        if (! $assignment
+            || $assignment->courier_id !== $courier->id
+            || ($assignment->status->value ?? $assignment->status) !== $expectedStatus->value
+            || ! $courier->belongsToCity($order->city_id)) {
             throw ValidationException::withMessages([
                 'order' => 'This order is not currently assigned to the courier in the expected state.',
             ]);

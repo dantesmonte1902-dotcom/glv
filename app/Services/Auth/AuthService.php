@@ -16,6 +16,7 @@ class AuthService
         $user = DB::transaction(function () use ($payload): User {
             $user = User::query()->create([
                 'city_id' => $payload['city_id'] ?? null,
+                'restaurant_id' => $payload['restaurant_id'] ?? null,
                 'name' => $payload['name'],
                 'email' => $payload['email'],
                 'phone' => $payload['phone'],
@@ -32,7 +33,7 @@ class AuthService
                 ]);
             }
 
-            return $user->loadMissing('city', 'courierProfile');
+            return $user->loadMissing('city', 'restaurant', 'courierProfile');
         });
 
         return [

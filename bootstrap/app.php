@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureTenantAccess;
 use App\Http\Middleware\EnsureUserHasRole;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -16,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->statefulApi();
         $middleware->alias([
+            'tenant' => EnsureTenantAccess::class,
             'role' => EnsureUserHasRole::class,
         ]);
     })

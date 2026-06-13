@@ -3,21 +3,22 @@
 use App\Enums\UserRole;
 use App\Models\Order;
 use App\Models\User;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Broadcast;
 
 Broadcast::channel('couriers.{courierId}', function (User $user, int $courierId): bool {
-    return $user->id === $courierId || $user->role === UserRole::ADMIN;
+    return $user->is_active
+        && (($user->role->value ?? $user->role) === UserRole::ADMIN->value
+            || (($user->role->value ?? $user->role) === UserRole::COURIER->value
+                && $user->id === $courierId));
 });
 
 Broadcast::channel('orders.{orderId}.tracking', function (User $user, int $orderId): bool {
-    $order = Order::query()->with('courierAssignment')->find($orderId);
+    $order = Order::query()->with('branch.restaurant', 'courierAssignment')->find($orderId);
 
     if (! $order) {
         return false;
     }
 
-    return $user->role === UserRole::ADMIN
-        || $order->customer_id === $user->id
-        || ($order->courierAssignment?->courier_id === $user->id)
-        || $user->role === UserRole::RESTAURANT;
+    return $user->is_active && Gate::forUser($user)->allows('track', $order);
 });

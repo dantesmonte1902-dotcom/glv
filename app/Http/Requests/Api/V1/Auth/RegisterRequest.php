@@ -16,7 +16,8 @@ class RegisterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'city_id' => ['nullable', 'integer', 'exists:cities,id'],
+            'city_id' => ['nullable', Rule::requiredIf(fn (): bool => $this->input('role') !== UserRole::ADMIN->value), 'integer', 'exists:cities,id'],
+            'restaurant_id' => ['nullable', Rule::requiredIf(fn (): bool => $this->input('role') === UserRole::RESTAURANT->value), 'integer', 'exists:restaurants,id'],
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'phone' => ['required', 'string', 'max:25', 'unique:users,phone'],

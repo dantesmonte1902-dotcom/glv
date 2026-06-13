@@ -19,6 +19,7 @@ class User extends Authenticatable
 
     protected $fillable = [
         'city_id',
+        'restaurant_id',
         'name',
         'email',
         'phone',
@@ -47,6 +48,11 @@ class User extends Authenticatable
         return $this->belongsTo(City::class);
     }
 
+    public function restaurant(): BelongsTo
+    {
+        return $this->belongsTo(Restaurant::class);
+    }
+
     public function courierProfile(): HasOne
     {
         return $this->hasOne(CourierProfile::class);
@@ -60,5 +66,20 @@ class User extends Authenticatable
     public function courierAssignments(): HasMany
     {
         return $this->hasMany(CourierAssignment::class, 'courier_id');
+    }
+
+    public function ownsRestaurant(Restaurant $restaurant): bool
+    {
+        return $this->ownsRestaurantId($restaurant->getKey());
+    }
+
+    public function ownsRestaurantId(?int $restaurantId): bool
+    {
+        return $this->restaurant_id !== null && (int) $this->restaurant_id === (int) $restaurantId;
+    }
+
+    public function belongsToCity(?int $cityId): bool
+    {
+        return $this->city_id !== null && (int) $this->city_id === (int) $cityId;
     }
 }

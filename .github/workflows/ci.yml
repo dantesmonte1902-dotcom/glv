@@ -1,0 +1,147 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  composer-validate:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: glv
+          POSTGRES_USER: glv
+          POSTGRES_PASSWORD: glv
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U glv -d glv"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v5
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, pgsql, pdo_pgsql, redis
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: ramsey/composer-install@v3
+      - run: composer validate --strict --no-check-publish
+
+  php-lint:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: glv
+          POSTGRES_USER: glv
+          POSTGRES_PASSWORD: glv
+        ports:
+          - 5432:5432
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+    steps:
+      - uses: actions/checkout@v5
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+      - uses: ramsey/composer-install@v3
+      - run: find app bootstrap config database routes tests -name '*.php' -print0 | xargs -0 -n1 php -l
+
+  code-style:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: glv
+          POSTGRES_USER: glv
+          POSTGRES_PASSWORD: glv
+        ports:
+          - 5432:5432
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+    steps:
+      - uses: actions/checkout@v5
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, pgsql, pdo_pgsql, redis
+      - uses: ramsey/composer-install@v3
+      - run: vendor/bin/pint --test
+
+  phpunit:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: glv
+          POSTGRES_USER: glv
+          POSTGRES_PASSWORD: glv
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U glv -d glv"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      APP_ENV: testing
+      APP_KEY: base64:Z2x2dGVzdGluZ2FwcGtleWZvcmNvcGlsb3QxMjM0NTY3ODkwMTI=
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: glv
+      DB_USERNAME: glv
+      DB_PASSWORD: glv
+      CACHE_STORE: redis
+      QUEUE_CONNECTION: redis
+      REDIS_HOST: 127.0.0.1
+      REDIS_PORT: 6379
+      BROADCAST_CONNECTION: null
+    steps:
+      - uses: actions/checkout@v5
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, pgsql, pdo_pgsql, redis
+      - uses: ramsey/composer-install@v3
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: cp .env.example .env
+      - run: php artisan key:generate --force
+      - run: php artisan migrate --force
+      - run: php artisan test

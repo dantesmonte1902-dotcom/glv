@@ -7,6 +7,7 @@ use App\Enums\UserRole;
 use App\Events\Orders\OrderApproved;
 use App\Events\Orders\OrderCreated;
 use App\Events\Orders\OrderRejected;
+use App\Events\Orders\OrderStatusUpdated;
 use App\Jobs\Orders\AssignCourierJob;
 use App\Models\CourierAssignment;
 use App\Models\Order;
@@ -20,6 +21,12 @@ class OrderService
     public function create(User $customer, array $payload): Order
     {
         $branch = RestaurantBranch::query()->findOrFail($payload['branch_id']);
+
+        if (! $customer->belongsToCity((int) $payload['city_id'])) {
+            throw ValidationException::withMessages([
+                'city_id' => 'The selected city is outside of your tenant scope.',
+            ]);
+        }
 
         if ((int) $branch->city_id !== (int) $payload['city_id']) {
             throw ValidationException::withMessages([
@@ -58,6 +65,7 @@ class OrderService
         });
 
         OrderCreated::dispatch($order->fresh()->load('city', 'branch.restaurant', 'items', 'courierAssignment'));
+        OrderStatusUpdated::dispatch($order->fresh()->load('branch.restaurant', 'courierAssignment'));
 
         return $order->fresh()->load('city', 'branch.restaurant', 'items', 'courierAssignment');
     }
@@ -71,7 +79,7 @@ class OrderService
 
     public function approve(User $actor, Order $order): Order
     {
-        $this->ensureRestaurantOrAdmin($actor);
+        $this->ensureRestaurantCanManageOrder($actor, $order);
 
         if (($order->status->value ?? $order->status) !== OrderStatus::PENDING_RESTAURANT_APPROVAL->value) {
             throw ValidationException::withMessages([
@@ -85,13 +93,14 @@ class OrderService
         ])->save();
 
         OrderApproved::dispatch($order->fresh()->load('city', 'branch.restaurant', 'items', 'courierAssignment'));
+        OrderStatusUpdated::dispatch($order->fresh()->load('branch.restaurant', 'courierAssignment'));
 
         return $order->fresh()->load('city', 'branch.restaurant', 'items', 'courierAssignment');
     }
 
     public function reject(User $actor, Order $order, ?string $reason = null): Order
     {
-        $this->ensureRestaurantOrAdmin($actor);
+        $this->ensureRestaurantCanManageOrder($actor, $order);
 
         $order->forceFill([
             'status' => OrderStatus::REJECTED,
@@ -99,13 +108,14 @@ class OrderService
         ])->save();
 
         OrderRejected::dispatch($order->fresh()->load('city', 'branch.restaurant', 'items', 'courierAssignment'));
+        OrderStatusUpdated::dispatch($order->fresh()->load('branch.restaurant', 'courierAssignment'));
 
         return $order->fresh()->load('city', 'branch.restaurant', 'items', 'courierAssignment');
     }
 
     public function dispatchAssignment(User $actor, Order $order): CourierAssignment
     {
-        $this->ensureRestaurantOrAdmin($actor);
+        $this->ensureRestaurantCanManageOrder($actor, $order);
 
         $assignment = $order->courierAssignment()->firstOrCreate([], [
             'status' => 'searching',
@@ -119,7 +129,8 @@ class OrderService
 
     public function deliver(User $actor, Order $order): Order
     {
-        if (($actor->role->value ?? $actor->role) !== UserRole::ADMIN->value && $order->courierAssignment?->courier_id !== $actor->id) {
+        if (($actor->role->value ?? $actor->role) !== UserRole::ADMIN->value
+            && ($order->courierAssignment?->courier_id !== $actor->id || ! $actor->belongsToCity($order->city_id))) {
             abort(403, 'Only the assigned courier or admin can complete delivery.');
         }
 
@@ -127,6 +138,8 @@ class OrderService
             'status' => OrderStatus::DELIVERED,
             'delivered_at' => now(),
         ])->save();
+
+        OrderStatusUpdated::dispatch($order->fresh()->load('branch.restaurant', 'courierAssignment'));
 
         return $order->fresh()->load('city', 'branch.restaurant', 'items', 'courierAssignment');
     }
@@ -136,21 +149,29 @@ class OrderService
         $role = $user->role->value ?? $user->role;
 
         $allowed = $role === UserRole::ADMIN->value
-            || $role === UserRole::RESTAURANT->value
-            || $order->customer_id === $user->id
-            || $order->courierAssignment?->courier_id === $user->id;
+            || ($role === UserRole::RESTAURANT->value
+                && $user->ownsRestaurantId($order->branch->restaurant_id)
+                && $user->belongsToCity($order->city_id))
+            || ($order->customer_id === $user->id && $user->belongsToCity($order->city_id))
+            || ($order->courierAssignment?->courier_id === $user->id && $user->belongsToCity($order->city_id));
 
         if (! $allowed) {
             abort(403, 'You are not allowed to access this order.');
         }
     }
 
-    private function ensureRestaurantOrAdmin(User $actor): void
+    private function ensureRestaurantCanManageOrder(User $actor, Order $order): void
     {
         $role = $actor->role->value ?? $actor->role;
 
-        if (! in_array($role, [UserRole::ADMIN->value, UserRole::RESTAURANT->value], true)) {
-            abort(403, 'Only restaurant and admin users can perform this action.');
+        if ($role === UserRole::ADMIN->value) {
+            return;
+        }
+
+        if ($role !== UserRole::RESTAURANT->value
+            || ! $actor->ownsRestaurantId($order->branch->restaurant_id)
+            || ! $actor->belongsToCity($order->city_id)) {
+            abort(403, 'Only the owning restaurant tenant or admin can perform this action.');
         }
     }
 

@@ -47,6 +47,7 @@ class OrderLifecycleTest extends TestCase
         ]);
         $restaurantUser = User::factory()->create([
             'city_id' => $city->id,
+            'restaurant_id' => $restaurant->id,
             'role' => UserRole::RESTAURANT,
         ]);
         $courier = User::factory()->create([
