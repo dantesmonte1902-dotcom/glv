@@ -1,0 +1,161 @@
+GLV LOCALHOST KURULUM REHBERI
+================================
+
+Bu dosya GLV projesini kendi bilgisayarinda Docker ile calistirmak icin hazirlandi.
+Ana hedef: Laravel API, PostgreSQL, Redis, nginx ve Reverb servislerini tek komutla ayaga kaldirmak.
+
+1. Gereksinimler
+----------------
+
+Zorunlu:
+- Git
+- Docker Desktop veya Docker Engine
+- Docker Compose v2
+
+Opsiyonel:
+- Node.js 24 veya uyumlu yeni bir surum
+- npm
+
+Not: Backend API Docker icinde calisir. Node.js sadece frontend asset build icin gerekir.
+
+2. Projeyi indirme
+------------------
+
+git clone https://github.com/dantesmonte1902-dotcom/glv.git
+cd glv
+git checkout copilot/create-directory-structure
+
+3. Kolay kurulum
+----------------
+
+Windows PowerShell:
+
+powershell -ExecutionPolicy Bypass -File scripts/local-install.ps1
+
+macOS / Linux / Git Bash:
+
+chmod +x scripts/local-install.sh
+./scripts/local-install.sh
+
+Script su islemleri yapar:
+- .env yoksa .env.example dosyasindan olusturur
+- Docker image'larini build eder
+- app, web, postgres, redis ve reverb servislerini baslatir
+- Composer paketlerini kurar
+- Laravel APP_KEY uretir
+- Migration'lari calistirir
+- Demo verileri seed eder
+- Node/npm varsa frontend paketlerini kurup build alir
+
+4. Demo kullanicilar
+--------------------
+
+Tum demo kullanicilarin sifresi:
+password
+
+Admin:
+admin@glv.local
+
+Restoran:
+restaurant@glv.local
+
+Musteri:
+customer@glv.local
+
+Kurye:
+courier@glv.local
+
+5. Uygulama adresleri
+---------------------
+
+Web/API:
+http://localhost:8080
+
+Reverb WebSocket:
+http://localhost:8081
+
+PostgreSQL:
+localhost:5432
+Kullanici: glv
+Sifre: glv
+Veritabani: glv
+
+Redis:
+localhost:6379
+
+6. Manuel kurulum
+-----------------
+
+cp .env.example .env
+docker compose up -d --build
+docker compose exec app composer install
+docker compose exec app php artisan key:generate --force
+docker compose exec app php artisan migrate --force
+docker compose exec app php artisan db:seed --force
+
+Opsiyonel frontend build:
+
+npm ci
+npm run build
+
+7. Test calistirma
+------------------
+
+docker compose exec app php artisan test
+
+Kod stili kontrolu:
+
+docker compose exec app vendor/bin/pint --test
+
+8. Local sifirlama
+------------------
+
+Windows PowerShell:
+
+powershell -ExecutionPolicy Bypass -File scripts/local-reset.ps1
+
+macOS / Linux / Git Bash:
+
+chmod +x scripts/local-reset.sh
+./scripts/local-reset.sh
+
+9. Sik kullanilan komutlar
+--------------------------
+
+Loglari izleme:
+
+docker compose logs -f
+
+Sadece Laravel loglari:
+
+docker compose exec app tail -f storage/logs/laravel.log
+
+Servisleri durdurma:
+
+docker compose down
+
+Veritabani dahil tamamen kapatma:
+
+docker compose down -v
+
+10. Sorun giderme
+-----------------
+
+Port cakismasi:
+- 8080, 8081, 5432 veya 6379 portlarini kullanan baska servis varsa kapat veya docker-compose.yml icindeki portlari degistir.
+
+APP_KEY hatasi:
+
+docker compose exec app php artisan key:generate --force
+
+Composer paketleri eksik:
+
+docker compose exec app composer install
+
+Migration hatasi:
+
+docker compose exec app php artisan migrate:fresh --seed --force
+
+Windows/OneDrive notu:
+- OneDrive altinda Docker volume performansi dusuk olabilir.
+- Mumkunse projeyi C:\dev\glv gibi sade bir klasorde calistir.

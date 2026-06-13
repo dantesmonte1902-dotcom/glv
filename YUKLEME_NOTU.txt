@@ -1,0 +1,46 @@
+GLV BRANCH YUKLEME PAKETI
+=========================
+
+Bu klasorun icindeki dosyalar GitHub'daki GLV reposunun kok dizinine ayni path yapisiyla yuklenmek icin hazirlandi.
+
+Hedef branch:
+copilot/create-directory-structure
+
+Yuklenecek dosyalar:
+
+1. kurulum.txt
+   - Localhost Docker kurulum rehberi.
+
+2. scripts/local-install.ps1
+   - Windows PowerShell icin tek komutluk kurulum.
+
+3. scripts/local-install.sh
+   - macOS/Linux/Git Bash icin tek komutluk kurulum.
+
+4. scripts/local-reset.ps1
+   - Windows icin local veritabani sifirlama ve seed komutu.
+
+5. scripts/local-reset.sh
+   - macOS/Linux/Git Bash icin local veritabani sifirlama ve seed komutu.
+
+6. database/seeders/DatabaseSeeder.php
+   - Sarajevo, Mostar, Tuzla sehirleri.
+   - Demo restoran, sube, admin, restoran kullanicisi, musteri ve kurye.
+
+7. .github/workflows/ci.yml
+   - PHPUnit job'undaki hardcoded APP_KEY kaldirildi.
+   - Test oncesi key generate akisi korunur.
+
+8. docs/GELISTIRME_YOL_HARITASI.md
+   - Glovo/Korpa benzeri urun icin net MVP yol haritasi.
+
+GitHub web uzerinden yukleme:
+
+1. Repo sayfasina git.
+2. Branch olarak copilot/create-directory-structure sec.
+3. Add file > Upload files ile dosyalari yukle.
+4. Path'leri korumak icin klasorleri repo kokune aynen tasiyarak yukle.
+5. Commit mesaji onerisi:
+   Add local setup docs and MVP development roadmap
+
+Yukledikten sonra GitHub Actions icin workflow onayi gerekiyorsa onayla.
