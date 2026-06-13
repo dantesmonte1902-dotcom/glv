@@ -8,7 +8,7 @@ Bu depo, **Sarajevo ile başlayıp Mostar, Tuzla ve diğer şehirlere ölçeklen
 - **API First**: Tüm iş kuralları REST API üzerinden sunulur (Flutter sadece API tüketir).
 - **Thin Controller + Service Layer**: Controller yalnızca request/response yönetir; iş kuralları service katmanındadır.
 - **Event-Driven + Queue**: Ağır işler event/listener/job ile asenkron yürütülür (Redis queue).
-- **Multi-city / Multi-branch**: Her restoran birden çok şubeye ve şehirye bağlanır.
+- **Multi-city / Multi-branch**: Her restoran birden çok şubeye ve şehire bağlanır.
 - **Future-ready verticals**: Sipariş `domain_type` alanı ile yemek dışı (market/eczane) genişlemesine hazırdır.
 
 ## 1) Klasör Yapısı
