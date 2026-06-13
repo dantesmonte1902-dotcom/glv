@@ -1,16 +1,18 @@
 <?php
 
-declare(strict_types=1);
-
 namespace App\Listeners\Orders;
 
 use App\Events\Orders\OrderCreated;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Support\Facades\Log;
 
-final class NotifyRestaurantOnOrderCreated
+class NotifyRestaurantOnOrderCreated implements ShouldQueue
 {
     public function handle(OrderCreated $event): void
     {
-        // In production this would push websocket + notification dispatch.
-        $unusedEvent = $event;
+        Log::info('Restaurant notified about new order.', [
+            'order_id' => $event->order->id,
+            'branch_id' => $event->order->branch_id,
+        ]);
     }
 }

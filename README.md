@@ -1,62 +1,67 @@
-# GLV – Bosnia Premium Delivery Platform (Architecture First)
+# GLV
 
-Bu depo, **Sarajevo ile başlayıp Mostar, Tuzla ve diğer şehirlere ölçeklenebilen** API-first bir teslimat platformunun ilk faz temelini içerir.
+GLV is an API-first, multi-city premium delivery platform for Bosnia and Herzegovina, starting with Sarajevo and designed to expand to Mostar, Tuzla, and additional cities.
 
-## 0) Koddan Önce Mimari
+## Architecture
 
-### Mimari yaklaşım
-- **API First**: Tüm iş kuralları REST API üzerinden sunulur (Flutter sadece API tüketir).
-- **Thin Controller + Service Layer**: Controller yalnızca request/response yönetir; iş kuralları service katmanındadır.
-- **Event-Driven + Queue**: Ağır işler event/listener/job ile asenkron yürütülür (Redis queue).
-- **Multi-city / Multi-branch**: Her restoran birden çok şubeye ve şehire bağlanır.
-- **Future-ready verticals**: Sipariş `domain_type` alanı ile yemek dışı (market/eczane) genişlemesine hazırdır.
+Before coding, the platform is designed around these rules:
 
-## 1) Klasör Yapısı
+- API First Architecture
+- Thin Controllers + Service Layer Pattern
+- Queue-based heavy operations
+- Event and Listener driven workflows
+- Multi-city and multi-branch support
+- Future-ready verticals (`food`, `market`, `pharmacy`)
 
-```text
-app/
-  Http/Controllers/Api/V1/
-  Services/
-    Auth/
-    Orders/
-    Courier/
-  Events/Orders/
-  Listeners/Orders/
-  Jobs/Orders/
-database/migrations/
-routes/
+## Implemented foundation
+
+- Real Laravel 12 application skeleton
+- PostgreSQL, Redis, queue, and broadcasting-ready environment defaults
+- Dockerized local stack for app, nginx, PostgreSQL, and Redis
+- Sanctum-based API auth scaffold
+- Core domain models for cities, restaurants, branches, users, couriers, orders, order items, and assignments
+- Order lifecycle endpoints for create, view, approve, reject, assign, accept, reject, and deliver
+- Courier availability and live location update APIs
+- Admin APIs for city, restaurant, branch, and courier activation management
+- Feature tests for auth and order lifecycle scenarios
+
+## Main API areas
+
+- `POST /api/v1/auth/register`
+- `POST /api/v1/auth/login`
+- `POST /api/v1/auth/logout`
+- `GET /api/v1/auth/me`
+- `POST /api/v1/orders`
+- `GET /api/v1/orders/{order}`
+- `POST /api/v1/orders/{order}/approve`
+- `POST /api/v1/orders/{order}/reject`
+- `POST /api/v1/orders/{order}/assign-courier`
+- `POST /api/v1/orders/{order}/accept-courier`
+- `POST /api/v1/orders/{order}/reject-courier`
+- `POST /api/v1/orders/{order}/deliver`
+- `PATCH /api/v1/courier/location`
+- `PATCH /api/v1/courier/availability`
+- `GET /api/v1/admin/cities`
+- `POST /api/v1/admin/cities`
+- `PATCH /api/v1/admin/cities/{city}`
+- `GET /api/v1/admin/restaurants`
+- `POST /api/v1/admin/restaurants`
+- `PATCH /api/v1/admin/restaurants/{restaurant}`
+- `GET /api/v1/admin/restaurants/{restaurant}/branches`
+- `POST /api/v1/admin/restaurants/{restaurant}/branches`
+- `PATCH /api/v1/admin/branches/{branch}`
+- `PATCH /api/v1/admin/couriers/{courier}/activation`
+
+## Local development
+
+```bash
+cp .env.example .env
+docker compose up --build
 ```
 
-## 2) Veritabanı Tasarımı (Özet)
+Then run migrations and tests inside the app container:
 
-- `cities`
-- `restaurants`
-- `restaurant_branches` (şehir bazlı)
-- `users` (role: customer/courier/restaurant/admin)
-- `courier_profiles`
-- `orders` (multi-city, multi-domain)
-- `order_items`
-- `courier_assignments`
-
-## 3) Migration Dosyaları
-
-`database/migrations/` altında ilk çekirdek migration dosyaları oluşturuldu.
-
-## 4) Auth Sistemi
-
-- Token tabanlı API auth için service/controller iskeleti eklendi.
-- Rollere göre yetkilendirme akışı için temel metotlar eklendi.
-
-## 5) Sipariş Sistemi
-
-- `OrderService` ile sipariş oluşturma akışı service katmanına alındı.
-- `OrderCreated` event’i tetiklenir; restoran bildirimi listener üzerinden çalışır.
-
-## 6) Kurye Atama Sistemi
-
-- `AssignCourierJob` ve `CourierAssignmentService` ile kuyruk tabanlı atama akışı iskeletlendi.
-- Canlı takip için konum verisi `courier_profiles.last_lat/lng` alanları üzerinden modellenmiştir.
-
-## İlk Faz Notu
-
-Bu faz, üretim koduna geçiş için mimari ve çekirdek domain omurgasını sağlar. Bir sonraki fazda endpoint doğrulamaları, policy/permission, websocket canlı takip yayınları ve kapsamlı testler tamamlanmalıdır.
+```bash
+docker compose exec app php artisan migrate
+docker compose exec app php artisan test
+```

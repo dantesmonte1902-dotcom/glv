@@ -15,6 +15,7 @@ return new class extends Migration {
             $table->string('address');
             $table->decimal('lat', 10, 7);
             $table->decimal('lng', 10, 7);
+            $table->decimal('service_radius_km', 6, 2)->default(5);
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });

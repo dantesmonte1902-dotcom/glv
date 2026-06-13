@@ -12,8 +12,11 @@ return new class extends Migration {
             $table->foreignId('order_id')->unique()->constrained('orders')->cascadeOnDelete();
             $table->foreignId('courier_id')->nullable()->constrained('users')->nullOnDelete();
             $table->string('status')->default('searching');
+            $table->timestamp('search_started_at')->nullable();
             $table->timestamp('assigned_at')->nullable();
             $table->timestamp('accepted_at')->nullable();
+            $table->timestamp('last_offered_at')->nullable();
+            $table->timestamp('last_rejected_at')->nullable();
             $table->timestamps();
         });
     }

@@ -13,13 +13,16 @@ return new class extends Migration {
             $table->foreignId('customer_id')->constrained('users')->cascadeOnDelete();
             $table->foreignId('branch_id')->constrained('restaurant_branches')->cascadeOnDelete();
             $table->string('domain_type')->default('food');
-            $table->string('status')->default('pending');
+            $table->string('status')->default('pending_restaurant_approval');
             $table->decimal('subtotal_amount', 12, 2)->default(0);
             $table->decimal('delivery_fee', 12, 2)->default(0);
             $table->decimal('total_amount', 12, 2)->default(0);
             $table->string('delivery_address');
             $table->decimal('delivery_lat', 10, 7)->nullable();
             $table->decimal('delivery_lng', 10, 7)->nullable();
+            $table->text('notes')->nullable();
+            $table->timestamp('approved_at')->nullable();
+            $table->timestamp('delivered_at')->nullable();
             $table->timestamps();
         });
     }

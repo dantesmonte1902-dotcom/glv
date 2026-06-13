@@ -1,27 +1,30 @@
 <?php
 
-declare(strict_types=1);
-
 namespace App\Jobs\Orders;
 
+use App\Models\Order;
 use App\Services\Courier\CourierAssignmentService;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Queue\Queueable;
 
-final class AssignCourierJob
+class AssignCourierJob implements ShouldQueue
 {
-    public function __construct(private int $orderId)
-    {
-    }
+    use Queueable;
 
-    public static function dispatch(int $orderId): string
-    {
-        $job = new self($orderId);
-        $job->handle(new CourierAssignmentService());
-
-        return 'courier-assignment-dispatched';
+    public function __construct(
+        private readonly int $orderId,
+        private readonly ?int $excludedCourierId = null,
+    ) {
     }
 
     public function handle(CourierAssignmentService $assignmentService): void
     {
-        $assignmentService->assignBestCourier($this->orderId);
+        $order = Order::query()->find($this->orderId);
+
+        if (! $order) {
+            return;
+        }
+
+        $assignmentService->assignBestCourier($order, $this->excludedCourierId);
     }
 }

@@ -1,17 +1,16 @@
 <?php
 
-declare(strict_types=1);
-
 namespace App\Events\Orders;
 
-final class OrderCreated
-{
-    public function __construct(public array $order)
-    {
-    }
+use App\Models\Order;
+use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Queue\SerializesModels;
 
-    public static function dispatch(array $order): self
+class OrderCreated
+{
+    use Dispatchable, SerializesModels;
+
+    public function __construct(public Order $order)
     {
-        return new self($order);
     }
 }
